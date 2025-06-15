@@ -1,81 +1,63 @@
-Breaking RSA Using Fermat's Factorization Method
-Project Overview
-This project demonstrates a practical attack on poorly implemented RSA keys using Fermat's factorization method. The scenario involves a vulnerable server generating RSA keys where primes p and q are chosen too close together, making factorization feasible and compromising the private key.
+Project Summary
+I successfully cracked a weak RSA key because the server used two prime numbers that were too close together. This allowed me to quickly factorize the key and gain access to the system.
 
-Objective
-The goal was to:
+How It Works (In Simple Terms)
+Found the public key
+Through scanning, I discovered the id_rsa.pub file on the server.
 
-Recover the private RSA key from the public key
+Factorized the key
+Used Fermat's method which works efficiently when primes p and q are close to each other.
 
-Use it to gain SSH access
+Calculated the private key
+Knowing p and q, I was able to reconstruct the full private key.
 
-Retrieve the system flag
+Gained server access
+Used the obtained key to SSH into the system.
 
-This showcases a real-world cryptanalysis attack, highlighting why secure RSA key generation is critical.
+Step-by-Step Process
+Discovered open ports:
 
-Methodology
-1. Reconnaissance
-Port scanning with nmap revealed:
+nmap -p- 10.10.124.176
+Found web server (port 80) and SSH (port 22)
 
-nmap -p- -T4 10.10.124.176
-Open ports: 22/tcp (SSH), 80/tcp (HTTP)
+Retrieved the public key:
 
-Directory enumeration with gobuster:
-
-gobuster dir -u http://10.10.124.176 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt
-Discovered /development directory containing id_rsa.pub
-
-2. Public Key Retrieval
-Downloaded the public key:
-
+bash
 wget http://10.10.124.176/development/id_rsa.pub
-3. Fermat's Factorization Implementation
-Created Python script (break_rsa.py) to:
-
-Factorize the modulus n using Fermat's method
-
-Calculate private exponent d
-
-Reconstruct and save the private key
-
-Key components:
+Ran the cracking program:
 
 python
-def factorize(n):
-    a = isqrt(n)
-    while True:
-        b_sq = a*a - n
-        b = isqrt(b_sq)
-        if b*b == b_sq:
-            return a+b, a-b
-        a += 1
-4. Private Key Recovery
-Executed the script:
+# Core part of the code:
+a = int(sqrt(n)) + 1
+while True:
+    b = sqrt(a*a - n)
+    if b.is_integer():
+        p = a + b
+        q = a - b
+        break
+    a += 1
+Obtained and saved the private key to id_rsa
 
-python3 break_rsa.py
-Successfully obtained:
+Connected to the server:
 
-Prime factors p and q
-
-Private exponent d
-
-PEM-formatted private key (id_rsa)
-
-5. SSH Access
-Secured the key and connected:
-
-chmod 400 id_rsa
 ssh root@10.10.124.176 -i id_rsa
-6. Flag Retrieval
-bash
-cat flag
-Flag: breakingRSAissuperfun20220809134031
+Found the flag in the flag file
 
-Security Implications
-This attack demonstrates:
+Why It Worked
+The server used two prime numbers that were too close together. For example:
 
-Critical vulnerability when RSA primes are too close together
+p = 100003
 
-How mathematical weaknesses can lead to complete system compromise
+q = 100019
 
-The importance of proper key generation practices
+Fermat's method quickly finds such numbers, breaking RSA security.
+
+Protection Recommendations
+Always generate keys using reliable programs
+
+Use primes that differ significantly
+
+Verify that |p-q| is sufficiently large
+
+Obtained flag:
+breakingRSAissuperfun20220809134031
